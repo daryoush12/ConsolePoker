@@ -7,27 +7,24 @@ namespace PokerGame
     public class GameHandler
     {
         private List<Card> _gameCards;
-        private Card[] _hand;
+        public Hand _hand;
         private const int _cardsPerCountry = 14;
         private bool _isrunning = true;
         private GameStateHandler _GameState;
         private Dictionary<Type, GameState> _gameStates;
+      
         
 
-        public void SetHand(Card[] hand)
-        {
-            this._hand = hand;
-        }
-
+  
         public void Start()
         {
             _GameState = new GameStateHandler();
             _gameStates = new Dictionary<Type, GameState>()
             {
                 {typeof(DealState), new DealState(this)},
-                {typeof(SwapState), new SwapState(this)}
+                {typeof(SwapState), new SwapState(this)},
+                {typeof(EvaluationState), new EvaluationState(this)}
             };
-
             _GameState.SetStates(_gameStates);
             do
             {
@@ -55,22 +52,14 @@ namespace PokerGame
             }
         }
 
-        public void PrintHand()
-        {
-            Console.WriteLine(":HAND: \n");
-            for (int i = 0; i < _hand.Length; i++)
-            {
-                Console.WriteLine(i + " " + _hand[i].CardNumber + "  " + _hand[i].Country + " \n");
-            }
-            Console.WriteLine(":-------: \n");
-        }
+     
 
         public void DealHand()
         {
-            Console.WriteLine("Cards : " + _gameCards.Count);
-            _hand = _gameCards.Take(5).ToArray<Card>();
+           
+            Console.WriteLine("Dealing hand..");
+            _hand = new Hand(_gameCards.Take(5).ToArray<Card>());
             _gameCards.RemoveRange(0, 5);
-            Console.WriteLine("Cards : " + _gameCards.Count);
         }
 
         public void ShuffleDeck()
@@ -78,75 +67,31 @@ namespace PokerGame
             _gameCards.Shuffle();
         }
 
-
-        public bool isFlush(Card[] hand)
+        public void SwitchCards(Card[] switchable)
         {
-            int amounted = 0;
-            CardCountry country = CardCountry.clubs;
-            for (int i = 0; i < hand.Length; i++)
+            List<Card> lst = new List<Card>();
+            lst.AddRange(_hand.GetCards());
+            foreach(Card c in switchable)
             {
-                if(i == 0)
-                {
-                    country = hand[i].Country;
-                    amounted = 1;
-                }
-                else if(hand[i].Country == country)
-                {
-                    amounted++;
-                }
+                lst.Remove(c);
             }
-
-
-            if (amounted == hand.Length)
-                return true;
-            else
-                return false;
+            lst.AddRange(Draw(switchable.Length));
+            _hand.SetCards(lst.ToArray());
         }
 
-        public bool isStraight(Card[] hand)
+        public List<Card>Draw(int amount)
         {
-            Array.Sort<Card>(hand);
-            int amounted = 0;
-            Card current = hand[0];
+            List<Card> drawedCards = new List<Card>();
 
-            for (int i = 0; i < hand.Length; i++)
+            for(int i = 0; i < amount; i++)
             {
-                if (i == 0)
-                {
-                    amounted = 1;
-                }
-                else if (hand[i].CardNumber - current.CardNumber == 1)
-                {
-                    amounted++;
-                    current = hand[i];
-                }
+                Card drawed = _gameCards[i];
+                _gameCards.Remove(drawed);
+                drawedCards.Add(drawed);   
             }
-            if(amounted == 5)
-            {
-                return true;
-            }
-
-            return false;
+            return drawedCards;
         }
 
-        public bool is2Pairs(Card[] hand)
-        {
-            return false;
-        }
-
-        public bool isStraightFlush(Card[] hand)
-        {
-            return (isFlush(hand) && isStraight(hand));
-        }
-        
-        public bool isThreeofKind()
-        {
-            return false;
-        }
-
-        public bool isFourofKind()
-        {
-            return false;
-        }
+    
     }
 }
